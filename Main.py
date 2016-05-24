@@ -1,8 +1,13 @@
 from pprint import pprint
 import telepot
 import time
+import soundcloud
+import spotipy
 
 TOKEN = open('TOKEN', 'r').read()
+# SCID = open('SOUNDCLOUDID', 'r').read()
+
+# scclient = soundcloud.Client(client_id=SCID)
 bot = telepot.Bot(TOKEN)
 
 
