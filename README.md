@@ -1,5 +1,5 @@
 # grovebot
-the dopest telegram bot this side of the mississippi.
+the mississippiest dope bot this side of the telegram.
 
 
 telegram.me/thegrovebot
