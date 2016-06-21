@@ -1,81 +1,105 @@
 from pprint import pprint
 import telepot
-import time
-import soundcloud
-import spotipy
-import sqlite3
+import datetime, time
+# import soundcloud
+# import spotipy
 from peewee import *
 
 # database setup
 db = SqliteDatabase('grovedb')
 
-TOKEN = 'your-token'
+TOKEN = open('TOKEN', 'r').read()
 # SCID = open('SOUNDCLOUDID', 'r').read()
 
 # scclient = soundcloud.Client(client_id=SCID)
 bot = telepot.Bot(TOKEN)
 
+URLS = ["youtube.com/watch", "soundcloud.com/", "open.spotify.com", "spotify:track:"]
+
 
 class Link(Model):
     user = CharField()
     message = TextField()
-    # date = DateField()
-    time = TimeField()
-    link = CharField()
+    time = DateTimeField()
+    link = TextField()
 
     class Meta:
         database = db
 
 db.connect()
-db.drop_tables([Link])
-db.create_tables([Link])
+try:
+    test = Link.create(
+        user="",
+        message="",
+        time=int(time.time()),
+        link=""
+    )
+    test.delete_instance()
+except OperationalError:
+    db.create_tables([Link])
 
 
 def handle(msg):
     pprint(msg)
     content_type, chat_type, chat_id = telepot.glance(msg)
+
     if content_type == 'text':
-        text = str(msg['text'])
-        print(text)
+        text = msg.get("text")
 
-        # If some genius sends a spotify URI instead of URL
-        if "spotify:track:" in text:
-            words = text.split()
-            url = "http://open.spotify.com/track/"
-            for word in words:
-                if "spotify:track:" in word:
-                    url += word.split(":")[-1]
-            bot.sendMessage(chat_id, "haha this dumbass doesn't know how to send a spotify link I gotchu bro")
-            bot.sendMessage(chat_id, url)
-
-            # capture spotify URLs in database
-            entry = Link.create(
-                user=msg.get('from').get('username'),
-                message=msg.get('text'),
-                time=msg.get('date'),
-                link=url
-            )
-            entry.save()
-
-        if "youtube.com/watch" in text or "soundcloud.com/" in text or "open.spotify.com" in text:
-            entry = Link.create(
-                user=msg.get('from').get('username'),
-                message=msg.get('text'),
-                time=msg.get('date')
-            )
-            entry.save()
+        for url in URLS:
+            if url in text:
+                save_link(msg)
+                break
 
 
 def save_link(msg):
-    pass
+    entry = Link.create(
+            user=msg.get('from').get('username'),
+            message=msg.get('text'),
+            time=unix_time_to_python_time(msg.get('date')),
+            link=get_link(msg)
+    )
+    entry.save()
+
+
+def get_link(msg):
+    # Get the link out of the message
+    text = msg.get('text')
+    words = text.split()
+    for word in words:
+        for url in URLS[:-1]:
+            if url in word:
+                return word
+            elif "spotify:track:" in word:
+                return convert_spotify_uri(text, msg["chat"]["id"])
+
 
 def get_tracks_by_date(date):
     pass
 
-def convert_spotify_uri(uri):
-    pass
+
+def convert_spotify_uri(text, chat_id):
+    words = text.split()
+    url = "http://open.spotify.com/track/"
+    for word in words:
+        if "spotify:track:" in word:
+            url += word.split(":")[-1]
+    bot.sendMessage(chat_id, "haha this dumbass doesn't know how to send a spotify link I gotchu bro")
+    bot.sendMessage(chat_id, url)
+    return url
+
+
+def unix_time_to_python_time(unix_time):
+    return datetime.datetime.fromtimestamp(int(unix_time))
+
+
+def db_debug():
+    # Prints everything in the database
+    print("CURRENT DATABASE STATE")
+    for link in Link.select():
+        print(link.user, "|", link.message, "|", link.time, "|", link.link)
 
 bot.message_loop(handle)
-
 while 1:
     time.sleep(10)
+    #db_debug()
