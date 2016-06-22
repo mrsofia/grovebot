@@ -45,15 +45,19 @@ except OperationalError:
 def on_chat_message(msg):
     pprint(msg)
     content_type, chat_type, chat_id = telepot.glance(msg)
-
-    if content_type == 'text':
-        text = msg.get("text")
-        for url in URLS:
-            if url in text:
-                # This means the message contains a link to some music, let's save it
-                save_link(msg)
-                get_fuego(msg)
-                break
+    # Ignore any messages received over 30s ago
+    cur_time = time.time()
+    if cur_time - msg.get("date") < 30:
+        if content_type == 'text':
+            text = msg.get("text")
+            for url in URLS:
+                if url in text:
+                    # This means the message contains a link to some music, let's save it
+                    save_link(msg)
+                    get_fuego(msg)
+                    break
+    else:
+        print("IGNORING OLD MESSAGE...")
 
 
 def save_link(msg):
