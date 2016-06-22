@@ -66,7 +66,7 @@ def save_link(msg):
     entry.save()
 # This dictionary keeps track of how fire a track is.
 # The key is the message_identifier of the message containing the link, the value is a list
-# of the message_identifier of the fuego display and the number of fuegos received.
+# of the message_identifier of the fuego display and a list of IDs that have sent fuegos.
 fuego_count = {}
 
 
@@ -77,26 +77,35 @@ def get_fuego(msg):
     ])
     bot_msg = bot.sendMessage(msg["chat"]["id"], msg.get('from').get('first_name') +
                     ' with the new hotness!\n', reply_markup=markup)
-    fuego_count[callback_data] = [telepot.message_identifier(bot_msg), 0]
+    fuego_count[callback_data] = [telepot.message_identifier(bot_msg), []]
 
 
 def on_callback_query(msg):
     query_id, from_id, data = telepot.glance(msg, flavor='callback_query')
     print('Callback query:', query_id, from_id, data)
-    add_fuego(query_id, data)
+    add_fuego(query_id, data, from_id)
 
 
-def add_fuego(query_id, data):
-    cur_fuego = fuego_count[data]
-    cur_fuego[1] += 1
-    text =""
-    for x in range(cur_fuego[1]):
-        text += "\U0001f525"
-    bot.answerCallbackQuery(query_id, text='fire!')
-    markup = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text='up-fuego \U0001f525', callback_data=data)]
-    ])
-    bot.editMessageText(cur_fuego[0], text, reply_markup=markup)
+def add_fuego(query_id, data, from_id):
+    try:
+        cur_fuego = fuego_count[data]
+        if from_id not in cur_fuego[1]:
+            cur_fuego[1].append(from_id)
+            bot.answerCallbackQuery(query_id, text='fire!')
+        else:
+            cur_fuego[1].remove(from_id)
+            bot.answerCallbackQuery(query_id, text='oops, not fire :(')
+        text = ""
+        for x in range(len(cur_fuego[1])):
+            text += "\U0001f525"
+        if text == "":
+            text = "Fire?"
+        markup = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text='up-fuego \U0001f525', callback_data=data)]
+        ])
+        bot.editMessageText(cur_fuego[0], text, reply_markup=markup)
+    except KeyError:
+        bot.answerCallbackQuery(query_id, text="Can't be voted on anymore!")
 
 
 def get_link(msg):
