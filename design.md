@@ -19,7 +19,7 @@ Future stuff:
 On the front end: render a web page that gets all of the current day's songs out of the database and presents them in the view. Also enable the user to see and search past days tracks. For the v1 we can get by just showing the current day's tracks
 
 Other stretch goals would be:
-- having some form of 'likes/fuegos' that would rank the songs based on how many people thought they were fuego
+- having some form of 'likes/fuegos' that would rank the songs based on how many people thought they were fuego ✓
 
 
 Stuff to do:
