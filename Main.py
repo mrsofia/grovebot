@@ -53,8 +53,8 @@ def on_chat_message(msg):
             for url in URLS:
                 if url in text:
                     # This means the message contains a link to some music, let's save it
-                    save_link(msg)
                     get_fuego(msg)
+                    save_link(msg)
                     break
     else:
         print("IGNORING OLD MESSAGE...")
