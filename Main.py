@@ -9,7 +9,7 @@ from peewee import *
 # database setup
 db = SqliteDatabase('grovedb')
 
-TOKEN = open('TOKEN', 'r').read()
+TOKEN = open('TOKEN', 'r').read().strip()
 # SCID = open('SOUNDCLOUDID', 'r').read()
 
 # scclient = soundcloud.Client(client_id=SCID)
@@ -62,12 +62,14 @@ def on_chat_message(msg):
 
 def save_link(msg):
     entry = Link.create(
-            user=msg.get('from').get('username'),
-            message=msg.get('text'),
-            time=unix_time_to_python_time(msg.get('date')),
-            link=get_link(msg)
+        user=msg.get('from').get('username'),
+        message=msg.get('text'),
+        time=unix_time_to_python_time(msg.get('date')),
+        link=get_link(msg)
     )
     entry.save()
+
+
 # This dictionary keeps track of how fire a track is.
 # The key is the message_identifier of the message containing the link, the value is a list
 # of the message_identifier of the fuego display and a list of IDs that have sent fuegos.
@@ -79,29 +81,43 @@ def get_fuego(msg):
     markup = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text='up-fuego \U0001f525', callback_data=callback_data)]
     ])
-    bot_msg = bot.sendMessage(msg["chat"]["id"], msg.get('from').get('first_name') +
-                    ' with the new hotness!\n', reply_markup=markup)
-    fuego_count[callback_data] = [telepot.message_identifier(bot_msg), []]
+    user = get_user_identifier(msg)
+    bot_msg = bot.sendMessage(msg["chat"]["id"], user +
+                              ' with the new hotness!\n', reply_markup=markup)
+    fuego_count[callback_data] = [telepot.message_identifier(bot_msg), [], []]
+
+
+def get_user_identifier(msg):
+    # returns either the users first name, username, or a default value in that order of preference
+    if msg.get('from').get('first_name'):
+        return msg.get('from').get('first_name')
+    elif msg.get('from').get('username'):
+        return msg.get('from').get('username')
+    else:
+        return 'nameless goon'
 
 
 def on_callback_query(msg):
     query_id, from_id, data = telepot.glance(msg, flavor='callback_query')
     print('Callback query:', query_id, from_id, data)
-    add_fuego(query_id, data, from_id)
+    add_fuego(query_id, data, from_id, msg)
 
 
-def add_fuego(query_id, data, from_id):
+def add_fuego(query_id, data, from_id, msg):
     try:
         cur_fuego = fuego_count[data]
+        upvoted_by = get_user_identifier(msg)
         if from_id not in cur_fuego[1]:
             cur_fuego[1].append(from_id)
+            cur_fuego[2].append(upvoted_by)
             bot.answerCallbackQuery(query_id, text='fire!')
         else:
             cur_fuego[1].remove(from_id)
+            cur_fuego[2].remove(upvoted_by)
             bot.answerCallbackQuery(query_id, text='oops, not fire :(')
         text = ""
         for x in range(len(cur_fuego[1])):
-            text += "\U0001f525"
+            text += "\U0001f525 by " + cur_fuego[2][x] + " \n"
         if text == "":
             text = "Fire?"
         markup = InlineKeyboardMarkup(inline_keyboard=[
