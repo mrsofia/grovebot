@@ -15,18 +15,17 @@ done < "../grovebot/PID"
 echo "kill successful or no such process was found"
 
 
-# delete curr
-if [ -e PID ] ; then
- echo "changing old PID to PID_last"
- mv PID PID_last
-fi
-
-
+# delete any existing PID_last files
 if [ -e ../grovebot/PID_last ] ; then
  echo "removing old PID_last"
  rm -f ../grovebot/PID_last
 fi
 
+# rename old PID file for debug purposes
+if [ -e PID ] ; then
+ echo "changing old PID to PID_last"
+ mv PID PID_last
+fi
 
 echo "starting bot..."
 
