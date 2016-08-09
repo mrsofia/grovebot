@@ -15,7 +15,7 @@ TOKEN = open('TOKEN', 'r').read()
 # scclient = soundcloud.Client(client_id=SCID)
 bot = telepot.Bot(TOKEN)
 
-URLS = ["youtube.com/watch", "soundcloud.com/", "open.spotify.com", "spotify:track:"]
+URLS = ["youtube.com/watch", "soundcloud.com/", "open.spotify.com", "spotify:track:", "youtu.be/"]
 
 
 class Link(Model):
