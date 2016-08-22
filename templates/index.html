@@ -20,4 +20,12 @@
     {{ ROW3 }}
     {% endautoescape %}
 </div>
+
+<footer class="footer">
+    <div class="container">
+{% autoescape false %}
+{{ PAGER }}
+{% endautoescape %}
+    </div>
+</footer>
 {% endblock %}
