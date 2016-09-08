@@ -1,0 +1,31 @@
+{% extends "bootstrap/base.html" %}
+{% block title %}Grovebot{% endblock %}
+
+{% block navbar %}
+<div class="navbar navbar-fixed-top">
+    <!-- ... -->
+</div>
+{% endblock %}
+
+{% block content %}
+<body>
+<div class="container">
+
+    <div class="page-header">
+        <h1>Today's 🔥 tracks</h1>
+    </div>
+    {% autoescape false %}
+    {{ ROW1 }}
+    {{ ROW2 }}
+    {{ ROW3 }}
+    {% endautoescape %}
+</div>
+
+<footer class="footer">
+    <div class="container">
+{% autoescape false %}
+{{ PAGER }}
+{% endautoescape %}
+    </div>
+</footer>
+{% endblock %}
