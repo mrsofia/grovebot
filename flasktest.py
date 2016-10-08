@@ -3,6 +3,8 @@ from flask_bootstrap import Bootstrap
 import soundcloud
 from requests import HTTPError
 from werkzeug.utils import redirect
+from peewee import *
+from datetime import *
 
 SCID = open('SOUNDCLOUDID', 'r').read()
 client = soundcloud.Client(client_id=SCID)
@@ -14,7 +16,8 @@ def create_app():
     return app
 
 app = create_app()
-
+db = SqliteDatabase('grovedb')
+db.connect()
 
 @app.route("/pages/<int:page>")
 def render_index(page):
@@ -25,11 +28,25 @@ def render_index(page):
     total_elements = len(songs)  # TODO: count the rows in the db instead of this
     if last_index > total_elements:
         last_index = total_elements
+
+    links_cleaned = clean_links(songs[first_index:last_index])
+    while links_cleaned > 0:
+        links_cleaned = clean_links(songs)
+
     cur_songs = songs[first_index:last_index]
     return render_template('index.html', ROW1=render_row(cur_songs[:3]),
                            ROW2=render_row(cur_songs[3:6]), ROW3=render_row(cur_songs[6:]),
                            PAGER=render_pager(page, total_elements))
 
+def clean_links(links):
+    links_cleaned = 0
+    for link in links:
+        if 'soundcloud' in link:
+            is_valid_link = verify_soundcloud(link)
+            if not is_valid_link:
+                links_cleaned += 1
+                links.remove(link)
+    return links_cleaned
 
 def render_pager(curpage, total_elements):
     if curpage == 1:
@@ -64,7 +81,10 @@ def render_row(links):
         elif "youtu" in link:
             elements.append(render_youtube(link))
         elif "soundcloud" in link:
+            # try:
             elements.append(render_soundcloud(link))
+            # except HTTPError:
+            #     continue
         else:
             pass  # skip any other links
     element1 = elements[0]
@@ -79,8 +99,26 @@ def render_row(links):
     return render_template('row.html', ELEMENT1=element1, ELEMENT2=element2, ELEMENT3=element3)
 
 
+
+
 def get_songs():
-    # TODO: get songs from db
+    links = Link.select().where(datetime.datetime.now() - Link.time < (datetime.timedelta(days=1)))
+    songs = []
+    for link in links:
+        songs.append(link.link)
+    return songs
+    # return get_dummy_songs()
+
+class Link(Model):
+    user = CharField()
+    message = TextField()
+    time = DateTimeField()
+    link = TextField()
+
+    class Meta:
+        database = db
+
+def get_dummy_songs():
     links = ["https://open.spotify.com/track/7eRhdHZPcndoK0C9K4rLM5",
     "https://www.youtube.com/watch?v=au0PRVF_RzU",
     "https://soundcloud.com/joshpan/killshot",
@@ -92,7 +130,7 @@ def get_songs():
     "https://www.youtube.com/watch?v=FbO_H4at5Gs",
     "https://soundcloud.com/activexmike/im-a-nobody",
     "https://open.spotify.com/track/6plT7nFGiXKSBP9HFSI4ef",
-    "https://soundcloud.com/bip-ling/bip-burger-1"]
+    "https://soundcloud.com/bip-ling/bip-burger-1",]
     return links
 
 
@@ -125,6 +163,20 @@ def render_youtube(url):
         uri = url.split("=")[-1]
 
     return render_template("youtube.html", URI=uri)
+
+
+# verify that a soundcloud link works because the API bars some songs from displaying & we don't want this to crash us
+def verify_soundcloud(url):
+    try:
+        if "/sets/" in url:
+            print("THIS ISN'T SUPPORTED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")  # TODO: this is gross
+            raise HTTPError
+        track = client.get('/resolve', url=url)
+    except HTTPError:
+        # The soundcloud API will randomly fail on some tracks for no apparent reason
+        # see: http://stackoverflow.com/questions/36360202/soundcloud-api-urls-timing-out-and-then-returning-error-403-on-about-50-of-trac
+        return False
+    return True
 
 
 def render_soundcloud(url):

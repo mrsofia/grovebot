@@ -5,3 +5,5 @@ bot.py
 .DS_Store
 PID
 nohup.out
+.idea/*
+SOUNDCLOUDID
