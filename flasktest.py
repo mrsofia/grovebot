@@ -102,10 +102,12 @@ def render_row(links):
 
 
 def get_songs():
-    links = Link.select().where(datetime.datetime.now() - Link.time < (datetime.timedelta(days=1)))
+    # links = Link.select().where(datetime.datetime.now() - Link.time < (datetime.timedelta(days=1)))
+    links = Link.select()
     songs = []
     for link in links:
         songs.append(link.link)
+    songs.reverse()
     return songs
     # return get_dummy_songs()
 
