@@ -1,8 +1,10 @@
 __pycache__
 TOKEN
+TOKEN_dev
+TOKEN_prod
+bot.log
 grovedb
 PRODTOKEN
-bot.py
 .DS_Store
 PID
 nohup.out
