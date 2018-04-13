@@ -1,21 +1,19 @@
 from pprint import pprint
 import telepot
 from telepot.namedtuple import InlineKeyboardMarkup, InlineKeyboardButton
-import datetime, time
-# import soundcloud
-# import spotipy
+import datetime
+import time
 from peewee import *
 
 # database setup
 db = SqliteDatabase('grovedb')
 
 TOKEN = open('TOKEN', 'r').read().strip()
-# SCID = open('SOUNDCLOUDID', 'r').read()
+URLS = ["youtube.com/watch", "soundcloud.com/", "open.spotify.com", "spotify:", "youtu.be/", "vimeo.com"]
+SPOTIFY_MEDIA_TYPES = ["track", "album", "playlist", "artist", "episode", "show"]
+SPOTIFY_BASE_URL = "http://open.spotify.com/"
 
-# scclient = soundcloud.Client(client_id=SCID)
 bot = telepot.Bot(TOKEN)
-
-URLS = ["youtube.com/watch", "soundcloud.com/", "open.spotify.com", "spotify:track:", "youtu.be/"]
 
 
 class Link(Model):
@@ -43,21 +41,35 @@ except OperationalError:
 
 
 def on_chat_message(msg):
-    pprint(msg)
-    content_type, chat_type, chat_id = telepot.glance(msg)
-    # Ignore any messages received over 30s ago
+    if not is_new_msg(msg) or not is_text_msg(msg):
+        return
+
+    if is_song_url(msg):
+        get_fuego(msg)
+        save_link(msg)
+
+
+def is_new_msg(msg):
     cur_time = time.time()
     if cur_time - msg.get("date") < 30:
-        if content_type == 'text':
-            text = msg.get("text")
-            for url in URLS:
-                if url in text:
-                    # This means the message contains a link to some music, let's save it
-                    get_fuego(msg)
-                    save_link(msg)
-                    break
-    else:
-        print("IGNORING OLD MESSAGE...")
+        return True
+    return False
+
+
+def is_text_msg(msg):
+    # content_type is first element of the tuple returned by glance - see docs for more info
+    content_type = telepot.glance(msg)[0]
+    if content_type != 'text':
+        return False
+    return True
+
+
+def is_song_url(msg):
+    text = msg.get("text")
+    for url in URLS:
+        if url in text:
+            return True
+    return False
 
 
 def save_link(msg):
@@ -133,27 +145,59 @@ def get_link(msg):
     text = msg.get('text')
     words = text.split()
     for word in words:
-        for url in URLS[:-1]:
+        for url in URLS:
             if url in word:
                 return word
-            elif "spotify:track:" in word:
+            elif "spotify:" in word:
                 return convert_spotify_uri(text, msg["chat"]["id"])
 
 
-def get_tracks_by_date(date):
-    pass
-
-
 def convert_spotify_uri(text, chat_id):
-    # Convert a spotify URI to a spotify URL
     words = text.split()
-    url = "http://open.spotify.com/track/"
+    pprint(words)
+    url = SPOTIFY_BASE_URL[:]
     for word in words:
-        if "spotify:track:" in word:
-            url += word.split(":")[-1]
+        if "spotify:" in word:
+            if "playlist:" in word:
+                url += word.split(":")[-4] + "/" + word.split(":")[-3] + "/" + word.split(":")[-2] + "/" + word.split(":")[-1]
+            else:
+                url += word.split(":")[-2] + "/" + word.split(":")[-1]
     bot.sendMessage(chat_id, "haha this dumbass doesn't know how to send a spotify link I gotchu bro")
     bot.sendMessage(chat_id, url)
     return url
+
+"""
+# Added a bunch of stuff that I thought I needed, but decided to triage it and come back later. 
+# These could be super useful and conducive to making much better code, but I will want to change the "consuming paradigm" first
+# ... so that things make sense in the "new way" (new way being this stuff)
+
+def determine_spotify_media_type(text):
+    for word in text:
+        if is_spotify_uri(word) and is_valid_spotify_media_type(word):
+            return get_spotify_media_type()
+    return "this_shyt_b_invalid_af_homez"
+
+
+def is_spotify_uri(word):
+    if "spotify:" in word:
+        return True
+    return False
+
+
+def is_valid_spotify_media_type(uri):
+    for media_type in SPOTIFY_MEDIA_TYPES:
+        if media_type in uri:
+            return True
+    return False
+
+
+def get_spotify_media_type(uri):
+    for media_type in SPOTIFY_MEDIA_TYPES:
+        if media_type in uri:
+            return media_type
+    return "this_shyt_b_invalid_af_homez"
+    
+"""
 
 
 def unix_time_to_python_time(unix_time):
@@ -172,3 +216,6 @@ bot.message_loop({'chat': on_chat_message,
 while 1:
     time.sleep(10)
     # db_debug()
+
+# if __name__ == "__main__":
+#     main()
