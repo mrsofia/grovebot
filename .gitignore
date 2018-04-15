@@ -1,3 +1,5 @@
+env
+project.ini
 __pycache__
 TOKEN
 TOKEN_dev

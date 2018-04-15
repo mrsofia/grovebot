@@ -72,16 +72,6 @@ def is_song_url(msg):
     return False
 
 
-def save_link(msg):
-    entry = Link.create(
-        user=msg.get('from').get('username'),
-        message=msg.get('text'),
-        time=unix_time_to_python_time(msg.get('date')),
-        link=get_link(msg)
-    )
-    entry.save()
-
-
 # This dictionary keeps track of how fire a track is.
 # The key is the message_identifier of the message containing the link, the value is a list
 # of the message_identifier of the fuego display and a list of IDs that have sent fuegos.
@@ -107,6 +97,43 @@ def get_user_identifier(msg):
         return msg.get('from').get('username')
     else:
         return 'nameless goon'
+
+
+def save_link(msg):
+    entry = Link.create(
+        user=msg.get('from').get('username'),
+        message=msg.get('text'),
+        time=unix_time_to_python_time(msg.get('date')),
+        link=get_link(msg)
+    )
+    entry.save()
+
+
+def get_link(msg):
+    # Get the link out of the message
+    text = msg.get('text')
+    words = text.split()
+    for word in words:
+        for url in URLS:
+            if url in word:
+                return word
+            elif "spotify:" in word:
+                return convert_spotify_uri(text, msg["chat"]["id"])
+
+
+def convert_spotify_uri(text, chat_id):
+    words = text.split()
+    pprint(words)
+    url = SPOTIFY_BASE_URL[:]
+    for word in words:
+        if "spotify:" in word:
+            if "playlist:" in word:
+                url += word.split(":")[-4] + "/" + word.split(":")[-3] + "/" + word.split(":")[-2] + "/" + word.split(":")[-1]
+            else:
+                url += word.split(":")[-2] + "/" + word.split(":")[-1]
+    bot.sendMessage(chat_id, "haha this dumbass doesn't know how to send a spotify link I gotchu bro")
+    bot.sendMessage(chat_id, url)
+    return url
 
 
 def on_callback_query(msg):
@@ -140,82 +167,15 @@ def add_fuego(query_id, data, from_id, msg):
         bot.answerCallbackQuery(query_id, text="Can't be voted on anymore!")
 
 
-def get_link(msg):
-    # Get the link out of the message
-    text = msg.get('text')
-    words = text.split()
-    for word in words:
-        for url in URLS:
-            if url in word:
-                return word
-            elif "spotify:" in word:
-                return convert_spotify_uri(text, msg["chat"]["id"])
-
-
-def convert_spotify_uri(text, chat_id):
-    words = text.split()
-    pprint(words)
-    url = SPOTIFY_BASE_URL[:]
-    for word in words:
-        if "spotify:" in word:
-            if "playlist:" in word:
-                url += word.split(":")[-4] + "/" + word.split(":")[-3] + "/" + word.split(":")[-2] + "/" + word.split(":")[-1]
-            else:
-                url += word.split(":")[-2] + "/" + word.split(":")[-1]
-    bot.sendMessage(chat_id, "haha this dumbass doesn't know how to send a spotify link I gotchu bro")
-    bot.sendMessage(chat_id, url)
-    return url
-
-"""
-# Added a bunch of stuff that I thought I needed, but decided to triage it and come back later. 
-# These could be super useful and conducive to making much better code, but I will want to change the "consuming paradigm" first
-# ... so that things make sense in the "new way" (new way being this stuff)
-
-def determine_spotify_media_type(text):
-    for word in text:
-        if is_spotify_uri(word) and is_valid_spotify_media_type(word):
-            return get_spotify_media_type()
-    return "this_shyt_b_invalid_af_homez"
-
-
-def is_spotify_uri(word):
-    if "spotify:" in word:
-        return True
-    return False
-
-
-def is_valid_spotify_media_type(uri):
-    for media_type in SPOTIFY_MEDIA_TYPES:
-        if media_type in uri:
-            return True
-    return False
-
-
-def get_spotify_media_type(uri):
-    for media_type in SPOTIFY_MEDIA_TYPES:
-        if media_type in uri:
-            return media_type
-    return "this_shyt_b_invalid_af_homez"
-    
-"""
-
-
 def unix_time_to_python_time(unix_time):
     return datetime.datetime.fromtimestamp(int(unix_time))
-
-
-def db_debug():
-    # Prints everything in the database
-    print("CURRENT DATABASE STATE")
-    for link in Link.select():
-        print(link.user, "|", link.message, "|", link.time, "|", link.link)
 
 
 bot.message_loop({'chat': on_chat_message,
                   'callback_query': on_callback_query})
 while 1:
     time.sleep(10)
-    # db_debug()
 
-# if __name__ == "__main__":
-#     main()
+
+if __name__ == "__main__":
+     main()
