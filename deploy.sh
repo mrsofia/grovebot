@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # cd to repository
-cd {your/repo}
+cd ~/grovebot/
 
 git reset --hard HEAD # discard local changes
 
@@ -29,7 +29,7 @@ fi
 
 echo "starting bot..."
 
-nohup python3 Main.py > /dev/null 2>&1 & echo $! > PID
+nohup python3 main.py > /dev/null 2>&1 & echo $! > PID
 
 echo "bot started."
 
