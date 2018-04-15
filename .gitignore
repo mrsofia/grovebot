@@ -8,6 +8,7 @@ bot.log
 grovedb
 PRODTOKEN
 .DS_Store
+PID_last
 PID
 nohup.out
 .idea/*

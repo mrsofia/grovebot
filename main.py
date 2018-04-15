@@ -6,7 +6,7 @@ import time
 from peewee import *
 
 # database setup
-db = SqliteDatabase('grovedb')
+db = SqliteDatabase('../thegrove/grovedb')
 
 TOKEN = open('TOKEN', 'r').read().strip()
 URLS = ["youtube.com/watch", "soundcloud.com/", "open.spotify.com", "spotify:", "youtu.be/", "vimeo.com"]
