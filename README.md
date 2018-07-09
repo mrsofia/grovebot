@@ -8,7 +8,7 @@ The dopest telegram bot this side of the mississippi.
 ![Upvote shared songs](https://i.imgur.com/yWHudZp.gif)
 
 ## Keep a record of all songs shared with the Grove Website
-![Grove Website](https://imgur.com/2Qe5pyo.gif)
+![Grove Website](https://i.imgur.com/2Qe5pyo.gif)
 
 telegram.me/thegrovebot
 
