@@ -9,7 +9,7 @@ from peewee import *
 db = SqliteDatabase('../thegrove/grovedb')
 
 TOKEN = open('TOKEN', 'r').read().strip()
-URLS = ["youtube.com/watch", "soundcloud.com/", "open.spotify.com", "spotify:", "youtu.be/", "vimeo.com"]
+URLS = ["youtube.com/watch", "soundcloud.com/", "open.spotify.com", "spotify:", "youtu.be/", "vimeo.com", "spotify.link"]
 SPOTIFY_MEDIA_TYPES = ["track", "album", "playlist", "artist", "episode", "show"]
 SPOTIFY_BASE_URL = "http://open.spotify.com/"
 
